@@ -1,11 +1,11 @@
 import bpy
 
-from addons.sample_addon.config import __addon_name__
-from addons.sample_addon.i18n.dictionary import dictionary
-from common.class_loader import auto_load
-from common.class_loader.auto_load import add_properties, remove_properties
-from common.i18n.dictionary import common_dictionary
-from common.i18n.i18n import load_dictionary
+from .config import __addon_name__
+from .i18n.dictionary import dictionary
+from ...common.class_loader import auto_load
+from ...common.class_loader.auto_load import add_properties, remove_properties, remove_addon_cache
+from ...common.i18n.dictionary import common_dictionary
+from ...common.i18n.i18n import load_dictionary
 
 # Add-on info
 bl_info = {
@@ -33,13 +33,7 @@ _addon_properties = {}
 #     },
 # }
 
-# Best practice: Please do not define Blender classes in the __init__.py file.
-# Define them in separate files and import them here. This is because the __init__.py file would be copied during
-# addon packaging, and defining Blender classes in the __init__.py file may cause unexpected problems.
-# 建议不要在__init__.py文件中定义Blender相关的类。请在单独的文件中定义它们并在此处导入它们。
-# __init__.py文件在代码打包时会被复制，在__init__.py文件中定义Blender相关的类可能会导致意外的问题。
 def register():
-    print("registering")
     # Register classes
     auto_load.init()
     auto_load.register()
@@ -49,7 +43,7 @@ def register():
     load_dictionary(dictionary)
     bpy.app.translations.register(__addon_name__, common_dictionary)
 
-    print("{} addon is installed.".format(bl_info["name"]))
+    print("{} addon is installed.".format(__addon_name__))
 
 
 def unregister():
@@ -58,5 +52,5 @@ def unregister():
     # unRegister classes
     auto_load.unregister()
     remove_properties(_addon_properties)
-
-    print("{} addon is uninstalled.".format(bl_info["name"]))
+    remove_addon_cache(__addon_name__)
+    print("{} addon is uninstalled.".format(__addon_name__))

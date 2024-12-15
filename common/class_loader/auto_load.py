@@ -2,6 +2,7 @@ import importlib
 import inspect
 import pkgutil
 import typing
+import sys
 from pathlib import Path
 
 import bpy
@@ -13,9 +14,10 @@ __all__ = (
     "preprocess_dictionary",
     "add_properties",
     "remove_properties",
+    "remove_addon_cache",
 )
 
-from common.types.framework import ExpandableUi
+from ..types.framework import ExpandableUi, is_extension
 
 blender_version = bpy.app.version
 
@@ -66,12 +68,16 @@ def unregister():
 #################################################
 
 def get_all_submodules(directory):
-    return list(iter_submodules(directory, directory.name))
+    return list(iter_submodules(directory))
 
 
-def iter_submodules(path, package_name):
+def iter_submodules(path):
+    import_as_extension = is_extension()
     for name in sorted(iter_submodule_names(path)):
-        yield importlib.import_module("." + name, package_name)
+        if import_as_extension:
+            yield importlib.import_module("..." + name, __package__)
+        else:
+            yield importlib.import_module("." + name, path.name)
 
 
 def iter_submodule_names(path, root=""):
@@ -251,3 +257,10 @@ def preprocess_dictionary(dictionary):
             dictionary[key][("Operator", invalid_item)] = translation
             del dictionary[key][invalid_item]
     return dictionary
+
+def remove_addon_cache(addon_module_prefix):
+    all_modules = sys.modules
+    all_modules = dict(sorted(all_modules.items(), key=lambda x: x[0]))
+    for module_name in all_modules:
+        if module_name.startswith(addon_module_prefix):
+            del sys.modules[module_name]
